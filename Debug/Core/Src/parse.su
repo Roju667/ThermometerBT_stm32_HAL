@@ -1,0 +1,7 @@
+parse.c:14:6:Parser_DisplayTerminal	24	static
+parse.c:21:6:Parse_WriteDataToBuffer	24	static
+parse.c:44:13:Parser_WAKE_UP	8	static
+parse.c:54:13:Parser_MEASURE	8	static
+parse.c:67:13:Parser_DISPLAY	8	static
+parse.c:78:13:Parser_SLEEP	16	static
+parse.c:113:9:Parser_Parse	40	static
