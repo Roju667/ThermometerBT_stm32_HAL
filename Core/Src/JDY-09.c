@@ -5,19 +5,37 @@
  *      Author: ROJEK
  */
 
-/* CubeMX default settings for UART :
- * Baud: 9600
+/*
+ * For user to configure in CubeMX :
+ *
+ * Default settings for UART :
+ * Baud: 9600 (configure other value after using SetBaudRate())
  * Word lenght : 8
  * Parity : None
  * Stop Bits : 1
  *
- * To receive message by this lib - global IRQ for UART has to be enabled.
- * Put JDY09_CallbackRecieve in HAL_UART_RxCpltCallback to get data to ring buffer of BT device.
- * In main function use JDY09_CallbackRecieve to check if there is message pending in Ring buffer.
+ * if RX interrupt mode : enable USARTx Global Interrupt
+ * if RX DMA mode : enable USARTx Global Interrupt, enable DMAx streamx global interrupt
+ *
+ * Default settings for DMA:
+ * USARTx_RX
+ * Mode: Normal
+ * Peripheral to memory
+ * Increment address of memory
+ * Data width : byte
+ *
+ * Default setting for State PIN (not necessary to use this pin - modify lib if you don't need it):
+ * GPIO_EXTIx
+ * No pull-up no pull-down
+ * External IT mode with Rising/Falling edge detection
+ *
+ *
+ * if RX interrupt mode : put JDY09_RxCpltCallbackIT in HAL_UART_RxCpltCallback in main.c
+ * if RX DMA mode : put JDY09_RxCpltCallbackIT in HAL_UARTEx_RxEventCallback in main.c
  *
  * To write AT+Commands device has to be disconnected from master. Connection is defined by GPIO pin STATE.
+ * LED on JDY09 blinking - no bluetooth connection, LED on - bluetooth connected
  *
- * Use EXTI IRQ to get a message whenever device is connected/disconnected
  */
 
 #include "main.h"
@@ -137,12 +155,23 @@ void JDY09_Init(JDY09_t *jdy09, UART_HandleTypeDef *huart, GPIO_TypeDef *StateGP
 	jdy09->StateGPIOPort = StateGPIOPort;
 	jdy09->StatePinNumber = StateGPIOPin;
 
-	HAL_UART_Receive_IT(jdy09->huart, &(jdy09->TmpBufferBT), 1);
+	// if irq mode is used for receive
+#if (JDY09_UART_RX_IT == 1)
+	HAL_UART_Receive_IT(jdy09->huart, &(jdy09->RecieveBufferIT), 1);
+#endif
+
+#if (JDY09_UART_RX_DMA == 1)
+	HAL_UARTEx_ReceiveToIdle_DMA(jdy09->huart,jdy09->RecieveBufferDMA,JDY09_RECIEVEBUFFERSIZE);
+#endif
 
 	//during init - disconnect and display basic information
 	JDY09_Disconnect(jdy09);
 
+	//for some reason this msg will not work in DMA recieve mode
+	//solution yet to find
+#if (JDY09_UART_RX_IT == 1)
 	JDY09_SendCommand(jdy09, JDY09_CMD_GETVERSION);
+#endif
 	JDY09_SendCommand(jdy09, JDY09_CMD_GETADRESS);
 	JDY09_SendCommand(jdy09, JDY09_CMD_GETBAUDRATE);
 	JDY09_SendCommand(jdy09, JDY09_CMD_GETNAME);
@@ -365,31 +394,67 @@ uint8_t JDY09_CheckPendingMessages(JDY09_t *jdy09, uint8_t *MsgBuffer)
 }
 
 /*
- * Callback to put in HAL_UART_RxCpltCallback
+ * Callback to put in HAL_UART_RxCpltCallback for IT mode
  *
  * @param[*jdy09] - pointer to struct for JDY09 bluetooth module
  * @param[*huart] - uart handle
  * @return - void
  */
-void JDY09_RxCpltCallback(JDY09_t *jdy09, UART_HandleTypeDef *huart)
+#if (JDY09_UART_RX_IT == 1)
+void JDY09_RxCpltCallbackIT(JDY09_t *jdy09, UART_HandleTypeDef *huart)
 {
 
 	//check if IRQ is coming from correct uart
 	if (jdy09->huart->Instance == huart->Instance)
 	{
 		//write a sign to ring buffer
-		RB_Write((&(jdy09->RingBuffer)), jdy09->TmpBufferBT);
+		RB_Write((&(jdy09->RingBuffer)), jdy09->RecieveBufferIT);
 
 		// when line is complete -> add 1 to received lines
-		if (jdy09->TmpBufferBT == JDY09_LASTCHARACTER)
+		if (jdy09->RecieveBufferIT == JDY09_LASTCHARACTER)
 		{
 			(jdy09->LinesRecieved)++;
 		}
 
 		// start another IRQ for single sign
-		HAL_UART_Receive_IT(jdy09->huart, &(jdy09->TmpBufferBT), 1);
+		HAL_UART_Receive_IT(jdy09->huart, &(jdy09->RecieveBufferIT), 1);
 	}
 }
+#endif
+/*
+ * Callback to put in HAL_UARTEx_RxEventCallback for DMA mode
+ *
+ * @param[*jdy09] - pointer to struct for JDY09 bluetooth module
+ * @param[*huart] - uart handle
+ * @param[size] - size of the recieved message
+ * @return - void
+ */
+#if (JDY09_UART_RX_DMA == 1)
+void JDY09_RxCpltCallbackDMA(JDY09_t *jdy09, UART_HandleTypeDef *huart,uint16_t size)
+{
+
+
+	//check if IRQ is coming from correct uart
+	if (jdy09->huart->Instance == huart->Instance)
+	{
+
+		uint8_t i;
+		//write message to ring buffer
+		for (i = 0; i < size; i++)
+		{
+			RB_Write((&(jdy09->RingBuffer)), jdy09->RecieveBufferDMA[i]);
+		}
+
+		// when line is complete -> add 1 to received lines
+		jdy09->LinesRecieved++;
+
+
+		// start another IRQ for single sign
+		HAL_UARTEx_ReceiveToIdle_DMA(jdy09->huart, jdy09->RecieveBufferDMA,
+				JDY09_RECIEVEBUFFERSIZE);
+	}
+}
+#endif
 
 /*
  * Callback to put in HAL_GPIO_EXTI_Callback

@@ -21,13 +21,19 @@
 #define JDY09_BAUDRATE_115200 			8
 #define JDY09_BAUDRATE_128000 			9
 
-#define JDY09_RECIEVEBUFFERSIZE			128
+#define JDY09_RECIEVEBUFFERSIZE			64
 
 #define JDY09_NOMESSAGE					0
 #define JDY09_MESSAGEPENDING			1
 
 #define JDY09_MAX_NAME_LENGHT			18
 #define JDY09_MAX_PIN_LENGHT			4
+
+#define JDY09_UART_RX_IT				0
+
+#if (JDY09_UART_RX_IT == 0)
+#define JDY09_UART_RX_DMA				1
+#endif
 
 
 typedef enum{
@@ -44,9 +50,9 @@ typedef struct JDY09_t
 {
 	UART_HandleTypeDef*	huart; 						// Uart handle
 
-	uint8_t RecieveBuffer[JDY09_RECIEVEBUFFERSIZE]; // buffer for received messages
+	uint8_t RecieveBufferDMA[JDY09_RECIEVEBUFFERSIZE]; // buffer for received messages in DMA mode
 
-	uint8_t TmpBufferBT;							// 1 byte buffer for a single char received
+	uint8_t RecieveBufferIT;// 1 byte buffer for a single char received in IRQ mode
 
 	Ringbuffer_t RingBuffer;						// ring buffer to save data
 
@@ -70,7 +76,12 @@ void JDY09_SetPassword(JDY09_t* jdy09,uint8_t* Password);
 void JDY09_Disconnect(JDY09_t *jdy09);
 void JDY09_ClearMsgPendingFlag(JDY09_t* jdy09);
 uint8_t JDY09_CheckPendingMessages(JDY09_t* jdy09,uint8_t* MsgBuffer);
-void JDY09_RxCpltCallback (JDY09_t* jdy09, UART_HandleTypeDef *huart);
+#if (JDY09_UART_RX_IT == 1)
+void JDY09_RxCpltCallbackIT(JDY09_t *jdy09, UART_HandleTypeDef *huart);
+#endif
+#if (JDY09_UART_RX_DMA == 1)
+void JDY09_RxCpltCallbackDMA(JDY09_t *jdy09, UART_HandleTypeDef *huart,uint16_t size);
+#endif
 void JDY09_DisplayTerminal(char *Msg);
 void JDY09_EXTICallback(JDY09_t *jdy09, uint16_t GPIO_Pin);
 #endif /* INC_JDY_09_H_ */

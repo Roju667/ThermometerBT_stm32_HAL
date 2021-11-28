@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -93,6 +94,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
 
   /* Initialize interrupts */
@@ -174,15 +176,28 @@ static void MX_NVIC_Init(void)
   /* USART1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(USART1_IRQn);
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 }
 
 /* USER CODE BEGIN 4 */
+#if (JDY09_UART_RX_IT == 1)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 
 	// Callback from BT module
-	JDY09_RxCpltCallback(&JDY09_1,huart);
+	JDY09_RxCpltCallbackIT(&JDY09_1, huart);
 }
+#endif
+
+#if (JDY09_UART_RX_DMA == 1)
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+	// Callback from BT module
+	JDY09_RxCpltCallbackDMA(&JDY09_1, huart, Size);
+}
+#endif
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
