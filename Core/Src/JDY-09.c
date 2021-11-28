@@ -51,7 +51,7 @@ void JDY09_DisplayTerminal(char *Msg)
  * @param[Command] - predefined command to send
  * @return - void
  */
-static void SendAndDisplayCmd(JDY09_t *jdy09, uint8_t *Command)
+static void JDY09_SendAndDisplayCmd(JDY09_t *jdy09, uint8_t *Command)
 {
 	uint8_t MsgRecieved[64];
 
@@ -124,10 +124,12 @@ static uint32_t JDY09_GetBaud(uint8_t Baudrate)
 void JDY09_Init(JDY09_t *jdy09, UART_HandleTypeDef *huart, GPIO_TypeDef *StateGPIOPort, uint16_t StateGPIOPin)
 {
 
-	// after trials i found out that module will not communicate correctly after loading new program and starting it right away
-	// 6ms was minimum that worked everytime after loading some changes
+	// init msg
+	JDY09_DisplayTerminal("JDY-09 Initializing... \n\r");
 
-	HAL_Delay(100);
+	// reset the ring buffer
+	RB_Flush(&(jdy09->RingBuffer));
+
 	// Assign uart
 	jdy09->huart = huart;
 
@@ -163,31 +165,31 @@ void JDY09_SendCommand(JDY09_t *jdy09, JDY09_CMD Command)
 		switch (Command)
 		{
 		case JDY09_CMD_GETVERSION:
-			SendAndDisplayCmd(jdy09, (uint8_t*) "AT+VERSION\r\n");
+			JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+VERSION\r\n");
 			break;
 
 		case JDY09_CMD_RESET:
-			SendAndDisplayCmd(jdy09, (uint8_t*) "AT+RESET\r\n");
+			JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+RESET\r\n");
 			break;
 
 		case JDY09_CMD_GETADRESS:
-			SendAndDisplayCmd(jdy09, (uint8_t*) "AT+LADDR\r\n");
+			JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+LADDR\r\n");
 			break;
 
 		case JDY09_CMD_GETBAUDRATE:
-			SendAndDisplayCmd(jdy09, (uint8_t*) "AT+BAUD\r\n");
+			JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+BAUD\r\n");
 			break;
 
 		case JDY09_CMD_GETPASSWORD:
-			SendAndDisplayCmd(jdy09, (uint8_t*) "AT+PIN\r\n");
+			JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+PIN\r\n");
 			break;
 
 		case JDY09_CMD_GETNAME:
-			SendAndDisplayCmd(jdy09, (uint8_t*) "AT+NAME\r\n");
+			JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+NAME\r\n");
 			break;
 
 		case JDY09_CMD_SETDEFAULTSETTINGS:
-			SendAndDisplayCmd(jdy09, (uint8_t*) "AT+DEFAULT\r\n");
+			JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+DEFAULT\r\n");
 			break;
 		}
 		return;
@@ -210,7 +212,7 @@ void JDY09_Disconnect(JDY09_t *jdy09)
 	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber) == GPIO_PIN_SET)
 	{
 		// disconnect
-		SendAndDisplayCmd(jdy09, (uint8_t*) "AT+DISC\r\n");
+		JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+DISC\r\n");
 		return;
 	}
 
@@ -236,7 +238,7 @@ void JDY09_SetBaudRate(JDY09_t *jdy09, uint8_t Baudrate)
 		//send new baudrate
 		uint8_t Msg[16];
 		sprintf((char*) Msg, "AT+BAUD%d\r\n", Baudrate);
-		SendAndDisplayCmd(jdy09, Msg);
+		JDY09_SendAndDisplayCmd(jdy09, Msg);
 		JDY09_DisplayTerminal("New baud set - restart device \n\r");
 
 		return;
@@ -268,7 +270,7 @@ void JDY09_SetName(JDY09_t *jdy09, uint8_t *Name)
 	{
 		uint8_t Msg[32];
 		sprintf((char*) Msg, "AT+NAME%s\r\n", Name);
-		SendAndDisplayCmd(jdy09, Msg);
+		JDY09_SendAndDisplayCmd(jdy09, Msg);
 		JDY09_DisplayTerminal("New name set - restart device \n\r");
 
 		return;
@@ -299,7 +301,7 @@ void JDY09_SetPassword(JDY09_t *jdy09, uint8_t *Password)
 	{
 		uint8_t Msg[32];
 		sprintf((char*) Msg, "AT+PIN%s\r\n", Password);
-		SendAndDisplayCmd(jdy09, Msg);
+		JDY09_SendAndDisplayCmd(jdy09, Msg);
 		JDY09_DisplayTerminal("New pin set - restart device \n\r");
 
 		return;
