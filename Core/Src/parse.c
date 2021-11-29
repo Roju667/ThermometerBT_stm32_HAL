@@ -141,7 +141,7 @@ uint8_t Parser_Parse(uint8_t *ParseBuffer)
 	} while (ParseBuffer[i] != '\n');
 
 
-	// there are 2 messages that are coming during connect/disconnect
+	// if there is no msg that we want to parse then just send it
 
 	if (cmd_count == 0)
 	{
@@ -196,6 +196,7 @@ uint8_t Parser_Parse(uint8_t *ParseBuffer)
 		{
 			Parser_DISPLAY();
 		}
+		//do help
 		else if (strcmp("HELP", (char*)ParsePointer) == 0)
 		{
 			Parser_HELP();
@@ -205,6 +206,12 @@ uint8_t Parser_Parse(uint8_t *ParseBuffer)
 		{
 			Parser_SLEEP(ParsePointer);
 			return PARSE_OK;
+		}
+		else
+		{
+			Parser_DisplayTerminal("Commmand unknown \n\r");
+			Parser_HELP();
+			return PARSE_ERROR_NOCMD;
 		}
 
 		strcpy((char*)LastCommand,(char*)ParsePointer);

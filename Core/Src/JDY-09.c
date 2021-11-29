@@ -174,6 +174,7 @@ void JDY09_Init(JDY09_t *jdy09, UART_HandleTypeDef *huart,
 	__HAL_DMA_DISABLE_IT(jdy09->huart->hdmarx, DMA_IT_HT);
 #endif
 
+	// small delay before transmission
 	HAL_Delay(100);
 
 	//during init - disconnect and display basic information
@@ -260,6 +261,8 @@ void JDY09_SendData(JDY09_t *jdy09, uint8_t *Data)
 
 		JDY09_DisplayTerminal(
 				"Data transfer from JDY-09 to external device completed \n\r");
+
+		return;
 	}
 
 	// AT cmd error
@@ -503,9 +506,11 @@ void JDY09_RxCpltCallbackDMA(JDY09_t *jdy09, UART_HandleTypeDef *huart,
 		if (newlines == 0)
 		{
 			// if formt of data is not correct print msg
-			JDY09_DisplayTerminal(
-					"Error, message has to be finished with +LF \n\r");
+			JDY09_SendData(jdy09,
+					(uint8_t*) "Error, message has to be finished with +LF \n\r");
 
+			//flush ringbuffer to not send later trash data
+			RB_Flush(&(jdy09->RingBuffer));
 		}
 
 		// add new lines

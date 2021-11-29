@@ -113,7 +113,6 @@ int main(void)
 	  {
 		  //clear pending flag
 		  JDY09_ClearMsgPendingFlag(&JDY09_1);
-
 		  //parse msg
 		  ParseStatus = Parser_Parse(TransferBuffer);
 	  }
