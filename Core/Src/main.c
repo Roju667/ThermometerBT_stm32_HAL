@@ -97,6 +97,7 @@ int main(void)
   MX_DMA_Init();
   MX_USART1_UART_Init();
 
+
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
@@ -107,9 +108,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // check if there is msg - if yes transfer it to a buffer
 	  if(JDY09_CheckPendingMessages(&JDY09_1, TransferBuffer) == JDY09_MESSAGEPENDING)
 	  {
+		  //clear pending flag
 		  JDY09_ClearMsgPendingFlag(&JDY09_1);
+
+		  //parse msg
 		  ParseStatus = Parser_Parse(TransferBuffer);
 	  }
 
@@ -170,12 +175,12 @@ void SystemClock_Config(void)
   */
 static void MX_NVIC_Init(void)
 {
-  /* EXTI3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
   /* USART1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(USART1_IRQn);
+  /* EXTI3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);

@@ -5,7 +5,11 @@
  *      Author: ROJEK
  */
 
-/*
+/* In JDY-09.h define JDY09_UART_RX_IT as 1 (using interrupt mode for receive) or 0 (use DMA mode for receive)
+ * DMA mode is recommended, if there is a situation that DMA RX is not possible, use IT mode.
+ *
+ * For UART transfer mode polling is used (used for sending commands).
+ *
  * For user to configure in CubeMX :
  *
  * Default settings for UART :
@@ -28,10 +32,12 @@
  * GPIO_EXTIx
  * No pull-up no pull-down
  * External IT mode with Rising/Falling edge detection
+ * if using State Pin : put JDY09_EXTICallback in HAL_GPIO_EXTI_Callback
  *
  *
  * if RX interrupt mode : put JDY09_RxCpltCallbackIT in HAL_UART_RxCpltCallback in main.c
  * if RX DMA mode : put JDY09_RxCpltCallbackIT in HAL_UARTEx_RxEventCallback in main.c
+ *
  *
  * To write AT+Commands device has to be disconnected from master. Connection is defined by GPIO pin STATE.
  * LED on JDY09 blinking - no bluetooth connection, LED on - bluetooth connected
@@ -45,18 +51,16 @@
 #include "stdio.h"
 #include "string.h"
 
-// Messages for display terminal
-
 /*
  * Terminal defined by user, commands sent in offline mode will be displayed
  * with responses from JDY-09
  *
- * @param[*jdy09] - pointer to struct for JDY09 bluetooth module
- * @param[Command] - predefined command to send
+ * @param[*Msg] - string to send to display terminal
+ *
  * @return - void
  */
 
-void JDY09_DisplayTerminal(char *Msg)
+static void JDY09_DisplayTerminal(char *Msg)
 {
 	uint8_t Lenght = strlen(Msg);
 	HAL_UART_Transmit(&huart2, (uint8_t*) Msg, Lenght, JDY09_UART_TIMEOUET);
@@ -71,14 +75,15 @@ void JDY09_DisplayTerminal(char *Msg)
  */
 static void JDY09_SendAndDisplayCmd(JDY09_t *jdy09, uint8_t *Command)
 {
-	uint8_t MsgRecieved[64];
+	uint8_t MsgRecieved[JDY09_RECIEVEBUFFERSIZE];
 
 	//display send info on user display terminal
 	JDY09_DisplayTerminal("Sending: ");
 	JDY09_DisplayTerminal((char*) Command);
 
 	//send data to JDY-09
-	HAL_UART_Transmit(jdy09->huart, Command, strlen((char*) Command), JDY09_UART_TIMEOUET);
+	HAL_UART_Transmit(jdy09->huart, Command, strlen((char*) Command),
+	JDY09_UART_TIMEOUET);
 
 	//wait for response line
 	while (jdy09->LinesRecieved == 0)
@@ -139,7 +144,8 @@ static uint32_t JDY09_GetBaud(uint8_t Baudrate)
  *
  * @return - void
  */
-void JDY09_Init(JDY09_t *jdy09, UART_HandleTypeDef *huart, GPIO_TypeDef *StateGPIOPort, uint16_t StateGPIOPin)
+void JDY09_Init(JDY09_t *jdy09, UART_HandleTypeDef *huart,
+		GPIO_TypeDef *StateGPIOPort, uint16_t StateGPIOPin)
 {
 
 	// init msg
@@ -160,18 +166,22 @@ void JDY09_Init(JDY09_t *jdy09, UART_HandleTypeDef *huart, GPIO_TypeDef *StateGP
 	HAL_UART_Receive_IT(jdy09->huart, &(jdy09->RecieveBufferIT), 1);
 #endif
 
+	// if dma mode is used for receive
 #if (JDY09_UART_RX_DMA == 1)
-	HAL_UARTEx_ReceiveToIdle_DMA(jdy09->huart,jdy09->RecieveBufferDMA,JDY09_RECIEVEBUFFERSIZE);
+	HAL_UARTEx_ReceiveToIdle_DMA(jdy09->huart, jdy09->RecieveBufferDMA,
+	JDY09_RECIEVEBUFFERSIZE);
+	// to avoid callback from half message this has be disabled
+	__HAL_DMA_DISABLE_IT(jdy09->huart->hdmarx, DMA_IT_HT);
 #endif
+
+	HAL_Delay(100);
 
 	//during init - disconnect and display basic information
 	JDY09_Disconnect(jdy09);
 
 	//for some reason this msg will not work in DMA recieve mode
 	//solution yet to find
-#if (JDY09_UART_RX_IT == 1)
 	JDY09_SendCommand(jdy09, JDY09_CMD_GETVERSION);
-#endif
 	JDY09_SendCommand(jdy09, JDY09_CMD_GETADRESS);
 	JDY09_SendCommand(jdy09, JDY09_CMD_GETBAUDRATE);
 	JDY09_SendCommand(jdy09, JDY09_CMD_GETNAME);
@@ -189,7 +199,8 @@ void JDY09_Init(JDY09_t *jdy09, UART_HandleTypeDef *huart, GPIO_TypeDef *StateGP
 void JDY09_SendCommand(JDY09_t *jdy09, JDY09_CMD Command)
 {
 	// check if there is no connection
-	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber) == GPIO_PIN_RESET)
+	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber)
+			== GPIO_PIN_RESET)
 	{
 		switch (Command)
 		{
@@ -230,6 +241,33 @@ void JDY09_SendCommand(JDY09_t *jdy09, JDY09_CMD Command)
 }
 
 /*
+ * Send random data from MCU to bluetooth connected device
+ *
+ * @param[*jdy09] - pointer to struct for JDY09 bluetooth module
+ * @param[Data] - data to send to device
+ *
+ * @return - void
+ */
+void JDY09_SendData(JDY09_t *jdy09, uint8_t *Data)
+{
+	// check if there is a connection
+	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber)
+			== GPIO_PIN_SET)
+	{
+		// send array of bytes to external device
+		HAL_UART_Transmit(jdy09->huart, Data, strlen((char*) Data),
+		JDY09_UART_TIMEOUET);
+
+		JDY09_DisplayTerminal(
+				"Data transfer from JDY-09 to external device completed \n\r");
+	}
+
+	// AT cmd error
+	JDY09_DisplayTerminal("Send data possible only in online mode \n\r");
+
+}
+
+/*
  * Disconnect from BT device using MCU
  *
  * @param[*jdy09] - pointer to struct for JDY09 bluetooth module
@@ -238,7 +276,8 @@ void JDY09_SendCommand(JDY09_t *jdy09, JDY09_CMD Command)
 void JDY09_Disconnect(JDY09_t *jdy09)
 {
 	//check connection
-	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber) == GPIO_PIN_SET)
+	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber)
+			== GPIO_PIN_SET)
 	{
 		// disconnect
 		JDY09_SendAndDisplayCmd(jdy09, (uint8_t*) "AT+DISC\r\n");
@@ -261,7 +300,8 @@ void JDY09_Disconnect(JDY09_t *jdy09)
 void JDY09_SetBaudRate(JDY09_t *jdy09, uint8_t Baudrate)
 {
 	//check if there is no connection
-	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber) == GPIO_PIN_RESET)
+	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber)
+			== GPIO_PIN_RESET)
 	{
 
 		//send new baudrate
@@ -295,7 +335,8 @@ void JDY09_SetName(JDY09_t *jdy09, uint8_t *Name)
 	}
 
 	// check if there is no active connection
-	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber) == GPIO_PIN_RESET)
+	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber)
+			== GPIO_PIN_RESET)
 	{
 		uint8_t Msg[32];
 		sprintf((char*) Msg, "AT+NAME%s\r\n", Name);
@@ -326,7 +367,8 @@ void JDY09_SetPassword(JDY09_t *jdy09, uint8_t *Password)
 	}
 
 	// check if there is no active connection
-	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber) == GPIO_PIN_RESET)
+	if (HAL_GPIO_ReadPin(jdy09->StateGPIOPort, jdy09->StatePinNumber)
+			== GPIO_PIN_RESET)
 	{
 		uint8_t Msg[32];
 		sprintf((char*) Msg, "AT+PIN%s\r\n", Password);
@@ -414,6 +456,11 @@ void JDY09_RxCpltCallbackIT(JDY09_t *jdy09, UART_HandleTypeDef *huart)
 		if (jdy09->RecieveBufferIT == JDY09_LASTCHARACTER)
 		{
 			(jdy09->LinesRecieved)++;
+		}else
+		{
+			// if formt of data is not correct print msg and flush RB
+			JDY09_DisplayTerminal("Error, message has to be finished with +LF \n\r");
+			RB_Flush(&(jdy09->RingBuffer));
 		}
 
 		// start another IRQ for single sign
@@ -430,28 +477,45 @@ void JDY09_RxCpltCallbackIT(JDY09_t *jdy09, UART_HandleTypeDef *huart)
  * @return - void
  */
 #if (JDY09_UART_RX_DMA == 1)
-void JDY09_RxCpltCallbackDMA(JDY09_t *jdy09, UART_HandleTypeDef *huart,uint16_t size)
+void JDY09_RxCpltCallbackDMA(JDY09_t *jdy09, UART_HandleTypeDef *huart,
+		uint16_t size)
 {
-
 
 	//check if IRQ is coming from correct uart
 	if (jdy09->huart->Instance == huart->Instance)
 	{
 
 		uint8_t i;
+		uint8_t newlines = 0;
 		//write message to ring buffer
 		for (i = 0; i < size; i++)
 		{
 			RB_Write((&(jdy09->RingBuffer)), jdy09->RecieveBufferDMA[i]);
+
+			// when line is complete -> add 1 to received lines
+			// only when last char is \n
+			if (jdy09->RecieveBufferDMA[i] == JDY09_LASTCHARACTER)
+			{
+				newlines++;
+			}
 		}
 
-		// when line is complete -> add 1 to received lines
-		jdy09->LinesRecieved++;
+		if (newlines == 0)
+		{
+			// if formt of data is not correct print msg
+			JDY09_DisplayTerminal(
+					"Error, message has to be finished with +LF \n\r");
 
+		}
+
+		// add new lines
+		jdy09->LinesRecieved = +newlines;
 
 		// start another IRQ for single sign
 		HAL_UARTEx_ReceiveToIdle_DMA(jdy09->huart, jdy09->RecieveBufferDMA,
-				JDY09_RECIEVEBUFFERSIZE);
+		JDY09_RECIEVEBUFFERSIZE);
+		// to avoid callback from half message this has be disabled
+		__HAL_DMA_DISABLE_IT(jdy09->huart->hdmarx, DMA_IT_HT);
 	}
 }
 #endif
@@ -479,5 +543,8 @@ void JDY09_EXTICallback(JDY09_t *jdy09, uint16_t GPIO_Pin)
 		{
 			JDY09_DisplayTerminal("Device disconnected \n\r");
 		}
+
+		// clear ring buffer if device is connected/disconnected
+		RB_Flush(&(jdy09->RingBuffer));
 	}
 }
