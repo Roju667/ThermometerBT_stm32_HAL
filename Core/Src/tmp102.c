@@ -13,8 +13,13 @@
 #include "usart.h"
 #include "tmp102.h"
 
+// edit register macro
 #define TMP102_EDITCONIFG_1BIT(config,value,offset)				(config) &= ~(1 << (offset)); (config) |= ((value) << (offset))
 #define TMP102_EDITCONIFG_2BIT(config,value,offset)				(config) &= ~(3 << (offset)); (config) |= ((value) << (offset))
+
+// check if the value defined by user is not to big for register macro
+#define TMP102_CHECK_REGISTER_1BIT(value,errorbuffer)			if((value) > 1) { (errorbuffer) = TMP102_ERR_WRONGCONFIG; return (errorbuffer);}
+#define TMP102_CHECK_REGISTER_2BIT(value,errorbuffer)			if((value) > 3) { (errorbuffer) = TMP102_ERR_WRONGCONFIG; return (errorbuffer);}
 
 /*
  * Read 2 bytes from TMP102
@@ -147,22 +152,32 @@ float TMP102GetTempFloat(TMP102_t *tmp102)
  * @param[*value] - array of 2 bytes, [0] integer part , [1] decimal part
  * @return - void
  */
-void TMP102GetTempInt(TMP102_t *tmp102, uint8_t *value)
+void TMP102GetTempInt(TMP102_t *tmp102, int8_t *value)
 {
 	// define variables
 	int16_t val;
 	// read temp data from register
 	val = (int16_t) TMP102_Read16(tmp102, TMP102_REG_TEMP);
 
-	// Convert to 2's complement, since temperature can be negative
-	if (val > 0x7FF)
+	// 12 bit mode - normal
+	if(tmp102->Configuration.TMP102_EM == 0)
 	{
-		val |= 0xF000;
+		// Convert to 2's complement, since temperature can be negative
+		if (val > 0x7FF) {
+			val |= 0xF000;
+			}
+	}
+	else
+		//13 bit mode - extended
+	{
+		if (val > 0xFFF){
+			val |= 0xE000;
+		}
 	}
 
 	// Convert to float temperature value (Celsius)
-	value[0] = val / 16; // // integer part
-	value[1] = ((val * 100) / 16) - (value[0] * 100); // decimal part
+	value[0] = val * TMP102_RESOLUTION; // // integer part
+	value[1] = ((val * 100) * TMP102_RESOLUTION) - (value[0] * 100); // decimal part
 }
 
 /*
@@ -197,78 +212,41 @@ uint8_t TMP102WriteConfig(TMP102_t *tmp102, TMP102writeConfig command, uint16_t 
 	// MSB [CR1][CR0][AL][EM][0][0][0][0][OS][R1][R0][F1][F0][POL][TM][SD] LSB
 	//     [7]  [6]  [5] [4] [3][2][1][0] [7] [6] [5] [4] [3] [2] [1] [0]
 
+	TMP102_CHECK_REGISTER_2BIT(value,tmp102->ErrorCode);
 	// select command
 	switch (command)
 	{
 
 	case TMP102_WRITE_SHUTDOWN:
 
-		// check if the value fits in the register [1 bit]
-		if (value > 1)
-		{
-			tmp102->ErrorCode = TMP102_ERR_WRONGCONFIG;
-			return TMP102_ERR_WRONGCONFIG;
-		}
-
+		TMP102_CHECK_REGISTER_1BIT(value,tmp102->ErrorCode);
 		TMP102_EDITCONIFG_1BIT(config,value,TMP102_CR_OFFSET_SD);
 		break;
 
 	case TMP102_WRITE_THERMOSTATMODE:
 
-		// check if the value fits in the register [1 bit]
-		if (value > 1)
-		{
-			tmp102->ErrorCode = TMP102_ERR_WRONGCONFIG;
-			return TMP102_ERR_WRONGCONFIG;
-		}
-
+		TMP102_CHECK_REGISTER_1BIT(value,tmp102->ErrorCode);
 		TMP102_EDITCONIFG_1BIT(config,value,TMP102_CR_OFFSET_TM);
 		break;
 
 	case TMP102_WRITE_POLARITY:
 
-		// check if the value fits in the register [1 bit]
-		if (value > 1)
-		{
-			tmp102->ErrorCode = TMP102_ERR_WRONGCONFIG;
-			return tmp102->ErrorCode;
-		}
-
+		TMP102_CHECK_REGISTER_1BIT(value,tmp102->ErrorCode);
 		TMP102_EDITCONIFG_1BIT(config,value,TMP102_CR_OFFSET_POL);
 		break;
 
 	case TMP102_WRITE_FALUTQUEUE:
-
-		// check if the value fits in the register [2 bits]
-		if (value > 3)
-		{
-			tmp102->ErrorCode = TMP102_ERR_WRONGCONFIG;
-			return tmp102->ErrorCode;
-		}
 
 		TMP102_EDITCONIFG_2BIT(config,value,TMP102_CR_OFFSET_FQ);
 		break;
 
 	case TMP102_WRITE_EXTENDEDMODE:
 
-		// check if the value fits in the register [1 bit]
-		if (value > 1)
-		{
-			tmp102->ErrorCode = TMP102_ERR_WRONGCONFIG;
-			return tmp102->ErrorCode;
-		}
-
+		TMP102_CHECK_REGISTER_1BIT(value,tmp102->ErrorCode);
 		TMP102_EDITCONIFG_1BIT(config,value,TMP102_CR_OFFSET_EM);
 		break;
 
 	case TMP102_WRITE_CONV_RATE:
-
-		// check if the value fits in the register [2 bits]
-		if (value > 3)
-		{
-			tmp102->ErrorCode = TMP102_ERR_WRONGCONFIG;
-			return tmp102->ErrorCode;
-		}
 
 		TMP102_EDITCONIFG_2BIT(config,value,TMP102_CR_OFFSET_CR);
 		break;
