@@ -8,7 +8,7 @@ Bluetooth module : JDY-09 (UART)
 Temparature sensor : TMP102 (I2C)  
 4x8 segment display : TM1637 (GPIO)
 
-Version 29.11.2021 :
+Version 03.12.2021 :
 
 Pins connected:
 JDY09 :  
