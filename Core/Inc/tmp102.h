@@ -89,8 +89,8 @@
  * (EM = 1). In normal mode, the temperature register, high-limit register, and low-limit register use a 12-bit data
  * format.
  */
-#define TMP102_CR_EXTENDED_ON
-#define TMP102_CR_EXTENDED_OFF
+#define TMP102_CR_EXTENDED_ON		1
+#define TMP102_CR_EXTENDED_OFF		0
 
 /* @Polarity
  * The polarity bit allows the user to adjust the polarity of the ALERT pin output. If the POL bit is set to 0 (default),

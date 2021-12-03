@@ -138,6 +138,12 @@ void _tm1637WriteByte(unsigned char b)
 
 void _tm1637DelayUsec(unsigned int i)
 {
+
+//	for(uint8_t i = 0;i++ ; i<10)
+//	{
+//
+//	}
+
 	uint32_t delay = HAL_GetTick();
 
 	do

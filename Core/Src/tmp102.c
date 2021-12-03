@@ -54,7 +54,14 @@ static uint16_t TMP102_Read16(TMP102_t *tmp102, uint8_t reg)
 	// return 16 bit data
 	if (reg != TMP102_REG_CONFIG)
 	{
+		if(tmp102->Configuration.TMP102_EM == 0)
+		{
 		return (value[0] << 4) | (value[1] >> 4);
+		}
+		else
+		{
+		return (value[0] << 5) | (value[1] >> 3);
+		}
 	}
 	else
 	{
@@ -111,7 +118,7 @@ static void TMP102_Write16(TMP102_t *tmp102, uint8_t reg, uint16_t value)
 float TMP102GetTempFloat(TMP102_t *tmp102)
 {
 	// define variables
-	int16_t val;
+	int16_t val = 0;
 	float temp_c;
 
 	// check configuration
@@ -139,6 +146,7 @@ float TMP102GetTempFloat(TMP102_t *tmp102)
 
 	// Convert to float temperature value (Celsius)
 	temp_c = (float)(val * 0.0625);
+
 
 
 	return temp_c;
@@ -484,8 +492,9 @@ void TMP102Init(TMP102_t *tmp102, I2C_HandleTypeDef *initI2CHandle,
 	tmp102->DeviceAdress = initDeviceAddress;
 
 	// Write new config - defined by user
-	TMP102WriteConfig(tmp102, TMP102_WRITE_CONV_RATE, TMP102_CR_CONV_RATE_4Hz);
+	TMP102WriteConfig(tmp102, TMP102_WRITE_CONV_RATE, TMP102_CR_CONV_RATE_8Hz);
 	TMP102WriteConfig(tmp102, TMP102_WRITE_SHUTDOWN, TMP102_CR_MODE_CONTINUOS);
+	TMP102WriteConfig(tmp102, TMP102_WRITE_EXTENDEDMODE, TMP102_CR_EXTENDED_ON);
 
 	TMP102GetConfiguration(tmp102);
 	TMP102GetMinMaxTemp(tmp102);

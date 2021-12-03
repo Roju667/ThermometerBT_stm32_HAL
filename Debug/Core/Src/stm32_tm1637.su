@@ -6,7 +6,7 @@ stm32_tm1637.c:101:6:_tm1637Stop	8	static
 stm32_tm1637.c:112:6:_tm1637ReadResult	8	static
 stm32_tm1637.c:122:6:_tm1637WriteByte	24	static
 stm32_tm1637.c:139:6:_tm1637DelayUsec	24	static
-stm32_tm1637.c:148:6:_tm1637ClkHigh	8	static
-stm32_tm1637.c:153:6:_tm1637ClkLow	8	static
-stm32_tm1637.c:158:6:_tm1637DioHigh	8	static
-stm32_tm1637.c:163:6:_tm1637DioLow	8	static
+stm32_tm1637.c:154:6:_tm1637ClkHigh	8	static
+stm32_tm1637.c:159:6:_tm1637ClkLow	8	static
+stm32_tm1637.c:164:6:_tm1637DioHigh	8	static
+stm32_tm1637.c:169:6:_tm1637DioLow	8	static
