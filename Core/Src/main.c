@@ -133,6 +133,7 @@ int main(void)
 	  tm1637DisplayDecimal((uint16_t)(TMP102GetTempFloat(&TMP102_1)*100), 1);
 	  HAL_Delay(500);
 
+	  //halko git
 
 
     /* USER CODE END WHILE */
