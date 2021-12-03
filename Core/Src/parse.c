@@ -8,8 +8,11 @@
 #include "main.h"
 #include "string.h"
 #include "ringbuffer.h"
-#include "parse.h"
 #include "usart.h"
+#include "tmp102.h"
+#include "stdlib.h"
+#include "stdio.h"
+#include "parse.h"
 
 void Parser_DisplayTerminal(char *Msg)
 {
@@ -51,12 +54,27 @@ static void Parser_WAKEUP(void)
 /*
  * @ MEASURE procedure
  */
-static void Parser_MEASURE(void)
+static void Parser_MEASURE(TMP102_t *TMP102)
 {
 	// send log to uart
-	Parser_DisplayTerminal("Calculating HUGE data\n\r");
+	Parser_DisplayTerminal("Measurment done :");
 
-	//bmp280 measure
+	uint8_t buffer[2];
+	uint8_t Msg[32];
+
+	TMP102GetTempInt(TMP102,buffer);
+
+	if (buffer[1] > 9)
+	{
+	sprintf((char*)Msg, " %d.%d deg C\n\r",buffer[0],buffer[1]);
+	}
+	else
+	{
+	sprintf((char*)Msg, " %d.0%d deg C\n\r",buffer[0],buffer[1]);
+	}
+	Parser_DisplayTerminal((char*)Msg);
+
+	return;
 
 	//bluetooth send to master
 }
@@ -123,7 +141,7 @@ static void Parser_SLEEP(uint8_t *ParseBuffer)
  * @ function parse message and start command procedures
  */
 
-uint8_t Parser_Parse(uint8_t *ParseBuffer)
+uint8_t Parser_Parse(uint8_t *ParseBuffer, TMP102_t *TMP102)
 {
 	// Count how many commands we have to parse
 	uint8_t cmd_count = 0;
@@ -189,7 +207,7 @@ uint8_t Parser_Parse(uint8_t *ParseBuffer)
 		// do MEASURE
 		else if (strcmp("MEASURE", (char*)ParsePointer) == 0)
 		{
-			Parser_MEASURE();
+			Parser_MEASURE(TMP102);
 		}
 		// do DISPLAY
 		else if (strcmp("DISPLAY", (char*)ParsePointer) == 0)

@@ -60,6 +60,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define TM1637_CLK_Pin GPIO_PIN_1
+#define TM1637_CLK_GPIO_Port GPIOC
+#define TM1637_DIO_Pin GPIO_PIN_2
+#define TM1637_DIO_GPIO_Port GPIOC
 #define BT_STATE_Pin GPIO_PIN_3
 #define BT_STATE_GPIO_Port GPIOC
 #define BT_STATE_EXTI_IRQn EXTI3_IRQn
@@ -75,6 +79,8 @@ void Error_Handler(void);
 #define TCK_GPIO_Port GPIOA
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
+#define TMP102_ALERT_Pin GPIO_PIN_8
+#define TMP102_ALERT_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

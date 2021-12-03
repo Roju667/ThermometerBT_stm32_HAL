@@ -61,8 +61,8 @@ all: main-build
 main-build: jdy_09_bluetooth.elf secondary-outputs
 
 # Tool invocations
-jdy_09_bluetooth.elf: $(OBJS) $(USER_OBJS) D:\Embedded\ C\kurs\jdy_09_bluetooth\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "jdy_09_bluetooth.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Embedded C\kurs\jdy_09_bluetooth\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="jdy_09_bluetooth.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+jdy_09_bluetooth.elf: $(OBJS) $(USER_OBJS) C:\Users\ROJEK\STM32CubeIDE\workspace_1.6.1\jdy_09_bluetooth\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "jdy_09_bluetooth.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\ROJEK\STM32CubeIDE\workspace_1.6.1\jdy_09_bluetooth\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="jdy_09_bluetooth.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -8,6 +8,8 @@
 #ifndef INC_PARSE_H_
 #define INC_PARSE_H_
 
+#include "tmp102.h"
+
 typedef enum
 {
 	PARSE_OK,
@@ -26,6 +28,6 @@ typedef enum
 #define ENDLINE '\n'
 
 void Parse_WriteDataToBuffer(Ringbuffer_t *RecieveBuffer, uint8_t *ParseBuffer);
-uint8_t Parser_Parse(uint8_t *ParseBuffer);
+uint8_t Parser_Parse(uint8_t *ParseBuffer, TMP102_t *TMP102);
 
 #endif /* INC_PARSE_H_ */

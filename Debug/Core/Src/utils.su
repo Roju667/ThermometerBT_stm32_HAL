@@ -1,0 +1,3 @@
+utils.c:14:6:UartLogBT	16	static
+utils.c:18:6:UartLogPC	16	static
+utils.c:22:6:I2CScan	88	static

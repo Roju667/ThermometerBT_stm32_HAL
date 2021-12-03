@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -29,6 +30,9 @@
 #include "parse.h"
 #include "string.h"
 #include "JDY-09.h"
+#include "utils.h"
+#include "tmp102.h"
+#include "stm32_tm1637.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,6 +55,9 @@
 uint8_t TransferBuffer[64];
 uint8_t ParseStatus;
 JDY09_t JDY09_1;
+TMP102_t TMP102_1;
+uint8_t temperaturevalue[2];
+uint32_t performancecheck;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,12 +103,17 @@ int main(void)
   MX_USART2_UART_Init();
   MX_DMA_Init();
   MX_USART1_UART_Init();
-
+  MX_I2C1_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
+  I2CScan(&hi2c1);
   JDY09_Init(&JDY09_1, &huart1,BT_STATE_GPIO_Port,BT_STATE_Pin);
+  TMP102Init(&TMP102_1, &hi2c1, TMP102_ADDRESS);
+  tm1637Init();
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -113,9 +125,15 @@ int main(void)
 	  {
 		  //clear pending flag
 		  JDY09_ClearMsgPendingFlag(&JDY09_1);
+
 		  //parse msg
-		  ParseStatus = Parser_Parse(TransferBuffer);
+		  ParseStatus = Parser_Parse(TransferBuffer,&TMP102_1);
 	  }
+
+	  tm1637DisplayDecimal((uint16_t)(TMP102GetTempFloat(&TMP102_1)*100), 1);
+	  HAL_Delay(500);
+
+
 
     /* USER CODE END WHILE */
 
@@ -174,12 +192,12 @@ void SystemClock_Config(void)
   */
 static void MX_NVIC_Init(void)
 {
-  /* USART1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* EXTI3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+  /* USART1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
