@@ -1,5 +1,5 @@
-# jdy_09_bluetooth
-Application on nucleo stm32f401re using JDY-09 module with my library.
+# ThermometerBT_stm32_HAL
+Application on nucleo stm32f401re doing a simple temperature measurement using HAL library.
 
 On the final version i want to do temperature measurment that can be triggered by bluetooth. Measurment will be send to external bluetooth device
 or displayed on 4x8segment display. After x minutes/measurment device will enter sleep mode and wait for next uart bluetooth interrupt.
