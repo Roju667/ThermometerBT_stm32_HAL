@@ -128,12 +128,10 @@ int main(void)
 			//parse msg
 			ParseStatus = Parser_Parse(TransferBuffer, &TMP102_1);
 		}
-		TMP102WriteConfig(&TMP102_1, TMP102_WRITE_EXTENDEDMODE, TMP102_CR_EXTENDED_ON);
+
 		tm1637DisplayDecimal((uint16_t) (TMP102GetTempFloat(&TMP102_1) * 100), 1);
-		HAL_Delay(500);
-		TMP102WriteConfig(&TMP102_1, TMP102_WRITE_EXTENDEDMODE, TMP102_CR_EXTENDED_OFF);
-		tm1637DisplayDecimal((uint16_t) (TMP102GetTempFloat(&TMP102_1) * 100), 1);
-		HAL_Delay(500);
+		HAL_Delay(1000);
+
 
 		//halko git
 
