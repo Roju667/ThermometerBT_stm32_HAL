@@ -1,9 +1,9 @@
 tmp102.c:36:17:TMP102_Read16	40	static
 tmp102.c:86:13:TMP102_Write16	40	static
 tmp102.c:124:7:TMP102GetTempFloat	24	static
-tmp102.c:164:6:TMP102GetTempInt	32	static
-tmp102.c:200:6:TMP102GetConfiguration	24	static
-tmp102.c:216:9:TMP102WriteConfig	24	static
-tmp102.c:291:6:TMP102GetMinMaxTemp	24	static
-tmp102.c:352:9:TMP102WriteMinMaxTempFloat	32	static
-tmp102.c:520:6:TMP102Init	24	static
+tmp102.c:162:6:TMP102GetTempInt	32	static
+tmp102.c:192:6:TMP102GetConfiguration	24	static
+tmp102.c:208:9:TMP102WriteConfig	24	static
+tmp102.c:283:6:TMP102GetMinMaxTemp	24	static
+tmp102.c:330:9:TMP102WriteMinMaxTempFloat	32	static
+tmp102.c:498:6:TMP102Init	24	static

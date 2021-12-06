@@ -18,6 +18,7 @@ C_SRCS += \
 ../Core/Src/syscalls.c \
 ../Core/Src/sysmem.c \
 ../Core/Src/system_stm32f4xx.c \
+../Core/Src/tim.c \
 ../Core/Src/tmp102.c \
 ../Core/Src/usart.c \
 ../Core/Src/utils.c 
@@ -36,6 +37,7 @@ OBJS += \
 ./Core/Src/syscalls.o \
 ./Core/Src/sysmem.o \
 ./Core/Src/system_stm32f4xx.o \
+./Core/Src/tim.o \
 ./Core/Src/tmp102.o \
 ./Core/Src/usart.o \
 ./Core/Src/utils.o 
@@ -54,6 +56,7 @@ C_DEPS += \
 ./Core/Src/syscalls.d \
 ./Core/Src/sysmem.d \
 ./Core/Src/system_stm32f4xx.d \
+./Core/Src/tim.d \
 ./Core/Src/tmp102.d \
 ./Core/Src/usart.d \
 ./Core/Src/utils.d 

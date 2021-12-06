@@ -9,10 +9,13 @@
 #include "string.h"
 #include "ringbuffer.h"
 #include "usart.h"
+#include "tim.h"
 #include "tmp102.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "parse.h"
+
+extern volatile uint32_t TimerCount10ms;
 
 void Parser_DisplayTerminal(char *Msg)
 {
@@ -59,21 +62,28 @@ static void Parser_MEASURE(TMP102_t *TMP102)
 	// send log to uart
 	Parser_DisplayTerminal("Measurment done :");
 
-	uint8_t buffer[2];
+
 	uint8_t Msg[32];
+#if (TMP102_USE_FLOATNUMBERS == 1)
+	float temperature;
+	temperature = TMP102GetTempFloat(TMP102);
+	sprintf((char*)Msg, " %2.2f deg C\n\r",temperature);
+#else
 
+	uint8_t TempBuffer[2];
 	TMP102GetTempInt(TMP102,buffer);
-
 	if (buffer[1] > 9)
 	{
-	sprintf((char*)Msg, " %d.%d deg C\n\r",buffer[0],buffer[1]);
+	sprintf((char*)Msg, " %d.%d deg C\n\r",TempBuffer[0],TempBuffer[1]);
 	}
 	else
 	{
-	sprintf((char*)Msg, " %d.0%d deg C\n\r",buffer[0],buffer[1]);
+	sprintf((char*)Msg, " %d.0%d deg C\n\r",TempBuffer[0],TempBuffer[1]);
 	}
-	Parser_DisplayTerminal((char*)Msg);
 
+#endif
+
+	Parser_DisplayTerminal((char*)Msg);
 	return;
 
 	//bluetooth send to master
@@ -85,9 +95,11 @@ static void Parser_MEASURE(TMP102_t *TMP102)
 static void Parser_DISPLAY(void)
 {
 	// send log to uart
-	Parser_DisplayTerminal("Parametres displayed \n\r");
+	Parser_DisplayTerminal("Temperature displayed for 1 minute \n\r");
 
-	//start timer to measure every 1 second for 1 minute
+	// start timer
+	TimerCount10ms = 0;
+	HAL_TIM_Base_Start_IT(&htim1);
 }
 
 static void Parser_HELP(void)
@@ -99,8 +111,6 @@ static void Parser_HELP(void)
 	Parser_DisplayTerminal("SLEEP; - enter sleep mode \n\r");
 	Parser_DisplayTerminal("HELP; - print all commands \n\r");
 
-
-	//start timer to measure every 1 second for 1 minute
 }
 
 /*
@@ -108,31 +118,31 @@ static void Parser_HELP(void)
  */
 static void Parser_SLEEP(uint8_t *ParseBuffer)
 {
-//	//execute sleep
-//
-//	//stop timer
-//	HAL_TIM_Base_Stop_IT(&htim1);
-//
-//	//delete all the commands after SLEEP
-//	memset(ParseBuffer,0,(sizeof(ParseBuffer)));
-//
-//	//send log on uart
-//	UartLogBT("Im going to sleep comadre, cya\n\r");
-//
-//	//stop hal tick
-//	HAL_SuspendTick();
-//
-//	//enter sleep mode -> it will wait for IRQ to wake up
-//	HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-//
-//	//after wake up continue tick
-//	HAL_ResumeTick();
-//
-//	//send log on uart
-//	UartLogBT("Welcome back broski\n\r");
-//
-//	//start count down for going back to sleep
-//	HAL_TIM_Base_Start_IT(&htim1);
+	//execute sleep
+
+	//stop timer
+	HAL_TIM_Base_Stop_IT(&htim1);
+
+	//delete all the commands after SLEEP
+	memset(ParseBuffer,0,(sizeof(ParseBuffer)));
+
+	//send log on uart
+	Parser_DisplayTerminal("Entering sleep mode\n\r");
+
+	//stop hal tick
+	HAL_SuspendTick();
+
+	//enter sleep mode -> it will wait for IRQ to wake up
+	HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+
+	//after wake up continue tick
+	HAL_ResumeTick();
+
+	//send log on uart
+	Parser_DisplayTerminal("Waking up...\n\r");
+
+	//start count down for going back to sleep
+	HAL_TIM_Base_Start_IT(&htim1);
 
 }
 

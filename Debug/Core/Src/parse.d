@@ -26,9 +26,12 @@ Core/Src/parse.o: ../Core/Src/parse.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_i2c_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/ringbuffer.h ../Core/Inc/usart.h ../Core/Inc/main.h \
- ../Core/Inc/tmp102.h ../Core/Inc/parse.h ../Core/Inc/tmp102.h
+ ../Core/Inc/tim.h ../Core/Inc/tmp102.h ../Core/Inc/parse.h \
+ ../Core/Inc/tmp102.h
 
 ../Core/Inc/main.h:
 
@@ -86,6 +89,10 @@ Core/Src/parse.o: ../Core/Src/parse.c ../Core/Inc/main.h \
 
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h:
 
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
+
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
+
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 
 ../Core/Inc/ringbuffer.h:
@@ -93,6 +100,8 @@ Core/Src/parse.o: ../Core/Src/parse.c ../Core/Inc/main.h \
 ../Core/Inc/usart.h:
 
 ../Core/Inc/main.h:
+
+../Core/Inc/tim.h:
 
 ../Core/Inc/tmp102.h:
 

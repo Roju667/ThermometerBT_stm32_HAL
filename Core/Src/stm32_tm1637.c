@@ -23,11 +23,29 @@ void _tm1637DioLow(void);
 #define CLK_PORT_CLK_ENABLE __HAL_RCC_GPIOC_CLK_ENABLE
 #define DIO_PORT_CLK_ENABLE __HAL_RCC_GPIOC_CLK_ENABLE
 
+#define DISPLAY_ERR(display1,display2,display3)			(display1) = 0x50; (display2) = 0x50; (display3) = 0x79
+
+/*	Segment map :
+ * 				  A
+ *				 ---
+ * 			   F|	|B
+ * 				|G	|
+ * 				 ---
+ * 			   E|	|C
+ * 				|	|
+ * 				 ---
+ * 				  D
+ *
+ * 		bx 	1111 1111
+ * 			SGFE DCBA
+ *
+ * 		S - separator
+ */
 
 const char segmentMap[] = {
-    0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, // 0-7
-    0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, // 8-9, A-F
-    0x00
+    0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, // 0-7			[0-7]
+    0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, // 8-9, A-F		[8-15]
+    0x40,0x50,0x00									// -,r,NULL		[16-18]
 };
 
 
@@ -45,6 +63,113 @@ void tm1637Init(void)
     HAL_GPIO_Init(DIO_PORT, &g);
 
     tm1637SetBrightness(8);
+}
+
+/*
+ * Take float number and put it on display
+ * If value is under -150 or over 150 it will display Err
+ * For negative values it will use first 8segment as minus and 3 others as value
+ * Separator will move accordinly to the value that it has to show
+ *
+ * @param[value] - float value to display [-150 - +150 range]
+ * @return - void
+ */
+void tm1637DisplayFloat(float value)
+{
+	uint16_t v = (uint16_t) (value * 100);
+	unsigned char digitArr[4];
+	uint8_t SeparatorPosition = 4; // outside the range
+	if (v > 0)
+	{
+		if (v > 15000)
+		{
+			// if value is under -150 then something is wrong -> display error
+			DISPLAY_ERR(digitArr[0], digitArr[1], digitArr[2]);
+
+		}
+		else
+		{
+			// separator middle position
+			SeparatorPosition = 2;
+			if (v > 9999)
+			{
+				// move separator
+				SeparatorPosition = 1;
+				// cut one digit
+				v /= 10;
+			}
+			for (int i = 0; i < 4; ++i)
+			{
+				digitArr[i] = segmentMap[v % 10];
+				if (i == SeparatorPosition)
+				{
+					digitArr[i] |= 1 << 7;
+				}
+				v /= 10;
+			}
+		}
+	}
+	else
+	{
+		// for negative number we use only 3 displays (first is minus)
+		// flip the sign
+		v *= -1;
+		SeparatorPosition = 2;
+		if (v > 15000)
+		{
+			// if value is under -150 then something is wrong -> display error
+			DISPLAY_ERR(digitArr[0],digitArr[1],digitArr[2]);
+
+		}
+			// if there is no error check further
+		else
+		{
+
+			if (v > 9999)
+			{
+				// cut 2 digits
+				v /= 100;
+				// no separator
+				SeparatorPosition = 4;
+			}
+			else if (v > 999)
+			{
+				// cut 1 digit
+				v /= 10;
+				// move separator
+				SeparatorPosition = 1;
+			}
+			for (int i = 0; i < 3; ++i)
+			{
+				digitArr[i] = segmentMap[v % 10];
+				if (i == SeparatorPosition)
+				{
+					digitArr[i] |= 1 << 7;
+				}
+				v /= 10;
+			}
+		}
+
+		digitArr[3] = segmentMap[16]; // minus
+	}
+
+
+    // write prepared data
+    _tm1637Start();
+    _tm1637WriteByte(0x40);
+    _tm1637ReadResult();
+    _tm1637Stop();
+
+    _tm1637Start();
+    _tm1637WriteByte(0xc0);
+    _tm1637ReadResult();
+
+    for (int i = 0; i < 4; ++i) {
+        _tm1637WriteByte(digitArr[3 - i]);
+        _tm1637ReadResult();
+    }
+
+    _tm1637Stop();
 }
 
 void tm1637DisplayDecimal(int v, int displaySeparator)

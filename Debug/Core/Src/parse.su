@@ -1,8 +1,8 @@
-parse.c:17:6:Parser_DisplayTerminal	24	static
-parse.c:24:6:Parse_WriteDataToBuffer	24	static
-parse.c:47:13:Parser_WAKEUP	8	static
-parse.c:57:13:Parser_MEASURE	56	static
-parse.c:85:13:Parser_DISPLAY	8	static
-parse.c:93:13:Parser_HELP	8	static
-parse.c:109:13:Parser_SLEEP	16	static
-parse.c:144:9:Parser_Parse	40	static
+parse.c:20:6:Parser_DisplayTerminal	24	static
+parse.c:27:6:Parse_WriteDataToBuffer	24	static
+parse.c:50:13:Parser_WAKEUP	8	static
+parse.c:60:13:Parser_MEASURE	56	static
+parse.c:95:13:Parser_DISPLAY	8	static
+parse.c:105:13:Parser_HELP	8	static
+parse.c:119:13:Parser_SLEEP	16	static
+parse.c:154:9:Parser_Parse	40	static
