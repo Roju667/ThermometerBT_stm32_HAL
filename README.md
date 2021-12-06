@@ -34,3 +34,10 @@ Module libs used:
 JDY-09 - my lib (on github)  
 TMP102 - my lib (on github)  
 TM1637 - https://github.com/rogerdahl/stm32-tm1637  
+  
+Bluetooth commands :  
+WAKEUP; - wake up mcu from sleep mode;  
+MEASURE; - measure temperature and send by bluetooth;  
+DISPLAY; - start measuring and displaying for 1 minute;  
+SLEEP; - enter sleep mode;  
+HELP; - show all the commands;  
