@@ -32,7 +32,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/dma.h ../Core/Inc/main.h ../Core/Inc/i2c.h ../Core/Inc/tim.h \
  ../Core/Inc/usart.h ../Core/Inc/gpio.h ../Core/Inc/ringbuffer.h \
  ../Core/Inc/parse.h ../Core/Inc/tmp102.h ../Core/Inc/JDY-09.h \
- ../Core/Inc/utils.h ../Core/Inc/tmp102.h ../Core/Inc/stm32_tm1637.h
+ ../Core/Inc/ringbuffer.h ../Core/Inc/utils.h ../Core/Inc/tmp102.h \
+ ../Core/Inc/stm32_tm1637.h
 
 ../Core/Inc/main.h:
 
@@ -115,6 +116,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/tmp102.h:
 
 ../Core/Inc/JDY-09.h:
+
+../Core/Inc/ringbuffer.h:
 
 ../Core/Inc/utils.h:
 
