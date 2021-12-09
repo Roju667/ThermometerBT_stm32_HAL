@@ -10,5 +10,5 @@ JDY-09.c:341:6:JDY09_SetName	48	static
 JDY-09.c:373:6:JDY09_SetPassword	48	static
 JDY-09.c:404:6:JDY09_ClearMsgPendingFlag	16	static
 JDY-09.c:416:9:JDY09_CheckPendingMessages	24	static
-JDY-09.c:493:6:JDY09_RxCpltCallbackDMA	32	static
-JDY-09.c:545:6:JDY09_EXTICallback	16	static
+JDY-09.c:488:6:JDY09_RxCpltCallbackDMA	32	static
+JDY-09.c:540:6:JDY09_EXTICallback	16	static
